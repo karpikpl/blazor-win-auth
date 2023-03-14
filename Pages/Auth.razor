@@ -1,0 +1,79 @@
+﻿@page "/auth"
+@using System.Security.Claims;
+
+<PageTitle>Permissions</PageTitle>
+
+<h2>Oparting System: @OpeartingSystem()</h2>
+
+<AuthorizeView Roles="NT AUTHORITY\Cloud Account Authentication">
+
+    <Authorized>
+
+        You are a member of <b>NT AUTHORITY\Cloud Account Authentication</b>
+
+        <h2>Claims</h2>
+        <table>
+            <tr>
+                <th>Claim</th>
+                <th>Value</th>
+            </tr>
+            @foreach (var c in claims)
+            {
+                <tr>
+                    <td>@c.Type</td>
+                    <td>@c.Value</td>
+                </tr>
+            }
+        </table>
+
+        <h2>Roles</h2>
+        <table>
+            <tr>
+                <th>Role</th>
+            </tr>
+            @foreach (var r in roles)
+            {
+                <tr>
+                    <td>@r</td>
+                </tr>
+            }
+        </table>
+    </Authorized>
+
+    <NotAuthorized>
+
+        You are NOT a member.
+
+    </NotAuthorized>
+
+</AuthorizeView>
+
+@code {
+    private int currentCount = 0;
+
+    private List<Claim> claims => ((ClaimsIdentity)httpContextAccessor.HttpContext.User.Identity).Claims.ToList();
+
+    private List<string> roles => ((ClaimsIdentity)httpContextAccessor.HttpContext.User.Identity).Claims.Where(q => q.Type
+    == ClaimTypes.GroupSid).Select(q => new
+    System.Security.Principal.SecurityIdentifier(q.Value).Translate(typeof(System.Security.Principal.NTAccount)).ToString()).ToList();
+
+    private string OpeartingSystem()
+    {
+        var os = Environment.OSVersion.Platform.ToString();
+
+        if (Environment.OSVersion.Version.Major == 10 && Environment.OSVersion.Version.Build >= 22000)
+        {
+            return os + ": Windows 11 or later";
+        }
+        else if (Environment.OSVersion.Version.Major == 10 && Environment.OSVersion.Version.Build >= 10240)
+        {
+            return os + ": Windows 10";
+        }
+        else
+        {
+            return os.ToString();
+        }
+    }
+
+    [Inject] public IHttpContextAccessor httpContextAccessor { get; set; } = default!;
+}
